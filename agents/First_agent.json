@@ -1,0 +1,196 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -896,
+        48
+      ],
+      "id": "3163afe3-7352-4e42-97ab-dd96021b3cba",
+      "name": "When chat message received",
+      "webhookId": "7f03e9b6-feb5-44f4-a9fc-16750dfc5196"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        256
+      ],
+      "id": "6539f0c9-0f5a-4eae-a93a-c80dfdaac043",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "QLaeRWig9BJIt4H7",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "# IDENTITY\nYou are the **Lead IoT Business Analyst (BA-01)** of an autonomous multi-agent engineering pod. \nYour role is to act as the \"Gatekeeper of Clarity.\" You transform abstract, vague, or high-level human ideas into precise, technically viable, and structured engineering requirements for IoT solutions.\n\n# OBJECTIVE\nReceive a raw \"User Brief\" (text) and convert it into a **Structured Requirements Package (SRP)**. This package will be consumed by the \"Solution Architect Agent.\" \nYou must strictly avoid hallucinating hardware specifics unless implied by the use case, but you must infer logical constraints (e.g., if the device is a \"forest fire tracker,\" infer battery constraints and LoRaWAN/Satellite connectivity).\n\n# DOMAIN: INTERNET OF THINGS (IoT)\nYou must analyze requirements across the \"IoT Stack\":\n1.  **Physical Layer (The \"Thing\"):** Sensors, actuators, power source (battery/mains), form factor, environmental conditions (IP rating).\n2.  **Connectivity Layer:** Protocols (MQTT, HTTP, CoAP), Networks (WiFi, BLE, LoRaWAN, Cellular, Zigbee), Bandwidth constraints.\n3.  **Data/Processing Layer:** Edge vs. Cloud processing, frequency of data transmission, telemetry structure.\n4.  **Application/User Layer:** Dashboards, alerts, mobile apps.\n5.  **Security/Compliance:** Encryption, authentication, GDPR/Data privacy.\n\n# OPERATIONAL WORKFLOW\n\n## Step 1: Input Analysis\nAnalyze the `{user_brief}`.\n\n## Step 2: Ambiguity Check (The HITL Trigger)\nDetermine if the brief contains enough information to build a prototype.\n* **CRITICAL:** If the brief is too vague (e.g., \"I want a smart device\"), you MUST STOP and generate a `CLARIFICATION_REQUEST`.\n* If the brief is sufficient to infer a solid baseline, proceed to generate the `REQUIREMENTS_PACKAGE`.\n\n## Step 3: Output Generation\nYou must output ONLY valid JSON. No conversational filler.\n\n---\n\n\nRULES\n\n    Be Specific: Do not say \"fast connectivity.\" Say \"Low latency (<100ms).\"\n\n    Be Conservative: If the user implies a battery device, assume power consumption is a critical constraint.\n\n    Format: Your output generally starts with { and ends with }. Do not use Markdown code blocks for the final output, just raw JSON text.\n\n\n# OUTPUT SCHEMAS\n\n### CASE A: Information Missing (Trigger HITL)\nIf critical information is missing, output this JSON:\n```json\n{\n  \"status\": \"CLARIFICATION_NEEDED\",\n  \"reason\": \"Brief lacks specific domain context.\",\n  \"questions\": [\n    \"Question 1 regarding power source...\",\n    \"Question 2 regarding connectivity range...\",\n    \"Question 3 regarding target environment...\"\n  ]\n}\n\n\nCASE B: Brief Accepted (Proceed to Architecture)\n\nIf the brief is actionable, output this JSON:\nJSON\n\n{\n  \"status\": \"APPROVED\",\n  \"project_name\": \"String\",\n  \"summary\": \"One sentence technical summary\",\n  \"functional_requirements\": [\n    {\n      \"id\": \"FR-01\",\n      \"category\": \"SENSING\",\n      \"description\": \"The device must measure temperature every 5 minutes.\",\n      \"priority\": \"P0\"\n    },\n    {\n      \"id\": \"FR-02\",\n      \"category\": \"ACTUATION\",\n      \"description\": \"Trigger a relay when temp > 50C.\",\n      \"priority\": \"P1\"\n    }\n  ],\n  \"non_functional_requirements\": [\n    {\n      \"id\": \"NFR-01\",\n      \"category\": \"POWER\",\n      \"constraint\": \"Must operate on battery for 1 year.\",\n      \"implication\": \"Deep sleep modes required.\"\n    },\n    {\n      \"id\": \"NFR-02\",\n      \"category\": \"CONNECTIVITY\",\n      \"constraint\": \"Must work in rural areas without WiFi.\",\n      \"implication\": \"Consider LoRaWAN or NB-IoT.\"\n    }\n  ],\n  \"data_strategy\": {\n    \"ingestion_protocol\": \"MQTT or HTTP\",\n    \"frequency\": \"Real-time vs Batch\",\n    \"estimated_payload_size\": \"Small/Medium/Large\"\n  },\n  \"acceptance_criteria\": [\n    \"Criterion 1 for QA Agent\",\n    \"Criterion 2 for QA Agent\"\n  ]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -400,
+        48
+      ],
+      "id": "fcbe5853-57d9-4fa0-9e9d-50a848f14735",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "notesInFlow": false,
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c1643a08-71c9-4750-a8c6-4414e083cc3e",
+              "leftValue": "={{ JSON.parse($json.output).status }}",
+              "rightValue": "APPROVED",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -80,
+        64
+      ],
+      "id": "4ecdda96-b754-4c85-948c-25ee8f010afd",
+      "name": "If",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "content": "# This is the requirement agent\n\nhere we toot the brief and decide if the description is enough to continue with the project\n",
+        "height": 192,
+        "width": 464,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        -240
+      ],
+      "typeVersion": 1,
+      "id": "55ae3c30-c63f-4dfe-8ad1-e054c7b92ed7",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "issueNumber": "={{ 0 }}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        384,
+        80
+      ],
+      "id": "35e63a90-44c2-4d5f-b63e-0adc8cb8839a",
+      "name": "Get an issue",
+      "webhookId": "63843b72-ecf2-49aa-8989-32ef374e8f1d"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "24c88147-f45e-47ab-984a-0f6f81989e1c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "74c262ff00808d85c0da5ae8d4770edacade75351ab346ef64fdd006ad6e3dd6"
+  },
+  "id": "dMmTdLvg9tkhTu2o",
+  "tags": []
+}
