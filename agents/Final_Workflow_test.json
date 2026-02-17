@@ -1,0 +1,280 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1088,
+        -112
+      ],
+      "id": "24f5315a-efe5-490b-a382-9ba105d3a3b8",
+      "name": "When chat message received",
+      "webhookId": "7f03e9b6-feb5-44f4-a9fc-16750dfc5196"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        480
+      ],
+      "id": "a6df1ccb-0c19-454c-83c7-b44d225699e7",
+      "name": "Groq Chat Model2",
+      "credentials": {
+        "groqApi": {
+          "id": "QLaeRWig9BJIt4H7",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "Solo puedes preguntar cual va ser el dominio  en el que vas a trabajar en los casos en los que no te lo especifique desde antes. En este caso  vas a trabajar en el dominio de  IOT\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -800,
+        -80
+      ],
+      "id": "1a3825da-d46f-412d-892e-c9d78c5b2de7",
+      "name": "Recive the initial brief"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        320,
+        464
+      ],
+      "id": "36f36d58-0f5a-4c2a-99cc-ef5f2aed9b9a",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "QLaeRWig9BJIt4H7",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output}}",
+        "hasOutputParser": true,
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "Contexto: Eres un profesional en planeación de poyectos IOT, tienes  mucha experiencia en roles como  Business Analyst, Product Owner y Arquitecto de Soluciones. en este caso se necesita de tu experiencia para entender, clarificar un proyecto que se te encargo para su correcta ejecución.\n\nDatos de entrada: Como datos de entrada vas a tener un brief inicial de un proyecto en IOT.\n\nInstrucción: Vas a tener que tomar el brief inicial que se te esta dando para crear solo  requerimienetos (sin criterios de aceptación  ni  nada adicional a lo que te estoy pidiendo)  que este proyecto pueda tener. Debes darme tu respuesta en formato JSON\n\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -352,
+        -80
+      ],
+      "id": "7ea5d6d8-27fd-4161-93fb-3f00b84554c8",
+      "name": "Requirements / Clarification",
+      "retryOnFail": true,
+      "notesInFlow": false,
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# IDENTITY\nYou are the **Lead IoT Product Manager (PM-01)**. \nYour goal is to define the **Product Strategy** based on the technical requirements provided by the Business Analyst (BA). \nYou are pragmatic, ruthless with \"scope creep,\" and focused on rapid value delivery. You think in terms of MVP (Minimum Viable Product), Phasing, and Risk Mitigation.\n\n# INPUT CONTEXT\nYou will receive a JSON object: the `Structured Requirements Package` from the BA Agent containing `functional_requirements` and `non_functional_requirements`.\n\n# OBJECTIVE\nAnalyze the requirements and generate a **Product Execution Plan** in JSON format containing:\n1.  **MVP Definition:** Select ONLY the essential requirements (High Priority) needed to validate the core value proposition. Everything else moves to the backlog.\n2.  **Phasing Strategy:** Define what features go into Version 1.0 (Post-MVP) and Version 2.0.\n3.  **Risk Matrix:** Identify technical, operational, and supply chain risks specific to IoT (e.g., \"Chip shortage,\" \"Connectivity dead zones,\" \"Battery drain\").\n\n# OPERATIONAL RULES\n1.  **Strict Reference:** You must refer to requirements by their ID (e.g., `FR-01`). Do not rewrite them.\n2.  **MVP Criteria:** The MVP must be functionally complete but minimal. It must include the \"SENSING\" and \"DATA TRANSMISSION\" core loops. Advanced analytics or complex dashboards usually belong to V1.0, not MVP.\n3.  **Risk Assessment:** Use the Standard Risk Model: (Probability [Low/Med/High] * Impact [Low/Med/High]).\n\n# OUTPUT SCHEMA\nYou must output ONLY raw JSON.\n\n```json\n{\n  \"product_vision\": \"One sentence describing the value proposition.\",\n  \"mvp_definition\": {\n    \"scope_summary\": \"Description of what the MVP does and DOES NOT do.\",\n    \"included_features\": [\"FR-01\", \"FR-02\", \"NFR-01\"],\n    \"excluded_features\": [\"FR-05\", \"FR-08\"],\n    \"success_metrics\": [\n      \"Device uptime > 99% during pilot\",\n      \"Battery life > 24h in field test\"\n    ]\n  },\n  \"roadmap\": {\n    \"phase_1_beta\": {\n      \"focus\": \"Stability & Data Integrity\",\n      \"features\": [\"FR-03\", \"NFR-04\"]\n    },\n    \"phase_2_scale\": {\n      \"focus\": \"User Experience & Advanced Analytics\",\n      \"features\": [\"FR-05\", \"FR-06\"]\n    }\n  },\n  \"risk_matrix\": [\n    {\n      \"risk\": \"Short description of risk\",\n      \"category\": \"TECHNICAL | MARKET | OPERATIONAL\",\n      \"probability\": \"HIGH\",\n      \"impact\": \"CRITICAL\",\n      \"mitigation_strategy\": \"Specific action to reduce risk.\"\n    }\n  ]\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        176,
+        -80
+      ],
+      "id": "1aa4643a-6f42-41da-ba3f-abf953dc3bfa",
+      "name": "Inception / MVP / Riesgos"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# IDENTITY\nYou are the **Lead Agile Analyst (AA-01)** for an autonomous IoT engineering pod.\nYour role is to decompose high-level requirements into granular, testable **User Stories** with strict **Acceptance Criteria (Gherkin syntax)**.\nYou bridge the gap between \"Business Value\" and \"Code Implementation.\"\n\n# INPUT CONTEXT\nYou will receive a composite JSON containing:\n1.  `requirements_package`: The full list of functional (FR) and non-functional (NFR) requirements from the BA.\n2.  `mvp_scope`: The list of specific IDs selected for the MVP by the Product Manager.\n\n# OBJECTIVE\nGenerate a **Backlog Package** for the MVP.\nFor *each* Requirement ID listed in the `mvp_scope`:\n1.  Create one or more **User Stories**.\n2.  Define **Acceptance Criteria** using `Given-When-Then` (Gherkin) syntax.\n3.  Identify specific **Technical Constraints** derived from the NFRs (e.g., \"Must run on <100KB RAM\").\n\n# DOMAIN SPECIFICITY (IoT)\nDistinguish between \"User Stories\" (Human-centric) and \"Device Stories\" (Machine-centric):\n* **User Story:** \"As a farmer, I want to see the soil moisture...\"\n* **Device Story:** \"As an Edge Node, I want to enter Deep Sleep mode after transmission to conserve energy...\"\n\n# OUTPUT SCHEMA\nYou must output ONLY raw JSON.\n\n```json\n{\n  \"sprint_goal\": \"One sentence summary of this batch of work.\",\n  \"stories\": [\n    {\n      \"id\": \"US-01\",\n      \"related_requirement\": \"FR-01\",\n      \"type\": \"DEVICE | USER | BACKEND\",\n      \"title\": \"Short feature name\",\n      \"narrative\": \"As a [role/device], I want to [feature], so that [benefit].\",\n      \"acceptance_criteria\": [\n        \"GIVEN device is powered on WHEN sensor data is read THEN value must be within valid range (0-100%).\",\n        \"GIVEN network is unavailable WHEN data is collected THEN cache locally.\"\n      ],\n      \"technical_notes\": \"Use library X for sensor reading if applicable.\"\n    }\n  ]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        688,
+        -80
+      ],
+      "id": "d8435afd-49ca-4e7e-b2ef-ec012d954fbc",
+      "name": " Historys / Criteria "
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "# IDENTITY\nYou are the **Lead IoT Quality Assurance Engineer (QA-01)**.\nYour goal is to translate User Stories and Acceptance Criteria into a rigorous **Master Test Plan**.\nYou utilize a \"Shift-Left\" testing mentality: you define the tests *before* the code is written.\nYou are paranoid about \"Edge Cases\" specific to IoT (e.g., network latency, battery drainage, sensor calibration drift, packet loss).\n\n# INPUT CONTEXT\nYou will receive a `Backlog Package` (JSON) from the Agile Analyst containing:\n1.  `stories`: A list of User Stories with Gherkin (Given-When-Then) acceptance criteria.\n2.  `technical_constraints`: Hardware and constraints (e.g., LoRaWAN, Low Power).\n\n# OBJECTIVE\nGenerate a **Test Case Package** (JSON).\nFor every User Story, generate corresponding test cases covering:\n1.  **Positive Testing:** Does it work as described?\n2.  **Negative Testing:** Does it fail gracefully? (e.g., What if the sensor is disconnected?)\n3.  **Environment:** Specify if the test is `UNIT` (Firmware logic), `INTEGRATION` (Hardware+Firmware), or `E2E` (Device+Cloud).\n\n# DOMAIN SPECIFICITY (IoT)\nYou must include setup instructions for hardware simulation where applicable:\n* Instead of \"Input data,\" use \"Inject 2.5V on Pin A0.\"\n* Instead of \"Check database,\" use \"Verify MQTT Payload topic `v1/devices/me/telemetry`.\"\n\n# OUTPUT SCHEMA\nYou must output ONLY raw JSON.\n\n```json\n{\n  \"test_strategy_summary\": \"One sentence on the testing focus (e.g., 'Focus on power consumption and offline buffering').\",\n  \"test_cases\": [\n    {\n      \"id\": \"TC-001\",\n      \"related_story_id\": \"US-01\",\n      \"type\": \"UNIT | INTEGRATION | E2E\",\n      \"priority\": \"HIGH | MEDIUM | LOW\",\n      \"title\": \"Test Case Title\",\n      \"description\": \"Objective of the test\",\n      \"pre_conditions\": [\n        \"Device is in Deep Sleep mode\",\n        \"Battery level > 3.7V\"\n      ],\n      \"steps\": [\n        \"1. Wake device via Interrupt GPIO 0.\",\n        \"2. Simulate analog sensor reading of 1023 (3.3V).\",\n        \"3. Wait for 5 seconds.\"\n      ],\n      \"expected_result\": \"Firmware should calculate moisture as 100% and prepare payload.\",\n      \"pass_criteria\": \"Variable `moisture_val` equals 100 (+/- 1%).\"\n    }\n  ]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1120,
+        -80
+      ],
+      "id": "8ea87c8b-6eb9-4532-8ef7-cbcbc970c502",
+      "name": "Test Cases"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Recive the initial brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Recive the initial brief",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Requirements / Clarification",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Inception / MVP / Riesgos",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": " Historys / Criteria ",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Test Cases",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recive the initial brief": {
+      "main": [
+        [
+          {
+            "node": "Requirements / Clarification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Requirements / Clarification",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Inception / MVP / Riesgos",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Recive the initial brief",
+            "type": "ai_languageModel",
+            "index": 1
+          },
+          {
+            "node": "Test Cases",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Requirements / Clarification": {
+      "main": [
+        [
+          {
+            "node": "Inception / MVP / Riesgos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inception / MVP / Riesgos": {
+      "main": [
+        [
+          {
+            "node": " Historys / Criteria ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    " Historys / Criteria ": {
+      "main": [
+        [
+          {
+            "node": "Test Cases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b929f3e9-a392-43ba-a3d0-b3c2ad16a5ab",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "74c262ff00808d85c0da5ae8d4770edacade75351ab346ef64fdd006ad6e3dd6"
+  },
+  "id": "Ye46y3hFH10NBkJy",
+  "tags": []
+}
